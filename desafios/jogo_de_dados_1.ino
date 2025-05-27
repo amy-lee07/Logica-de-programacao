@@ -1,78 +1,79 @@
-// C++ code
+//C++
 //
-int ledVerde = 1;
-int ledVermelho = 9;
-int ledAzul = 5;
-int numeroSorteado = 0;
-#include <Servo.h>
 Servo motor;
-void desenhaCabecalho(){
-  Serial.println("|-------------------------------|");
-  Serial.println("|                               |");
-  Serial.println(" --- PROGRAMA JOGO DE DADOS --- ");
-  Serial.println("|                               |");
-  Serial.println("|-------------------------------|");
-}
-void setup()
-{
- Serial.begin(9600);
-  pinMode(ledAzul, OUTPUT);
-  pinMode(ledVerde, OUTPUT);
+#include <Servo.h>
+int ledVermelho = 7;
+int ledVerde = 10;
+int ledsAzuis[] = {2, 3, 4};  
+int numLedsAzuis = 3;
+int pinoServo = 12;
+int acertos = 0;
+int numeroSorteado;
+
+void setup() {
+  Serial.begin(9600);
+
   pinMode(ledVermelho, OUTPUT);
-  
-  motor.write(0);
-     delay(1500);
-     motor.write(90);
-     delay(1500);
-     motor.write(180);
-     delay(1500);
-     motor.write(90);
-     delay(1500);
+  pinMode(ledVerde, OUTPUT);
+  for (int i = 0; i < numLedsAzuis; i++) {
+    pinMode(ledsAzuis[i], OUTPUT);
+    digitalWrite(ledsAzuis[i], LOW); 
+  }
 
+  motor.attach(pinoServo);
+  motor.write(0); 
+
+  Serial.println("bem-vindo a fortaleza do dado sagrado!");
+  Serial.println("adivinhe um número (1 a 6):");
+  novoDesafio();
 }
 
-void loop()
-{
- desenhaCabecalho;
- Serial.println("digite um palpite entre 1 e 6:");
- while(!Serial.available());
- int palpite = Serial.parseInt();
- int numeroSorteado = random(1, 7);
- Serial.println("Seu palpite: " + String(palpite));
- Serial.println("numero sorteado: " + String(numeroSorteado));
-  if(palpite == numeroSorteado)
-  {
-  Serial.println("parabens, voce acertou");
-  }else{
-  Serial.println("que pena, tente outra vez");
+void loop() {
+  if (Serial.available() > 0) {
+    int tentativa = Serial.parseInt();
+
+    if (tentativa < 1 || tentativa > 6) {
+      Serial.println("digite um numero entre 1 e 6.");
+      return;
+    }
+
+    Serial.print("voce escolheu: ");
+    Serial.println(tentativa);
+    Serial.print("numero sorteado: ");
+    Serial.println(numeroSorteado);
+
+    if (tentativa == numeroSorteado) {
+      piscarLED(ledVerde);
+      acertos++;
+      Serial.print("acertou! Progresso: ");
+      Serial.print(acertos);
+      Serial.println("/3");
+
+      if (acertos <= numLedsAzuis) {
+        digitalWrite(ledsAzuis[acertos - 1], HIGH);
+      }
+
+      if (acertos == 3) {
+        Serial.println("voce acertou! A porta se abre...");
+        motor.write(12); 
+        return; 
+      }
+    } else {
+      piscarLED(ledVermelho);
+      Serial.println("errou! Tente novamente...");
+    }
+
+    novoDesafio();
   }
-  Serial.println("reiniciando o programa");
-  Serial.println();
-  delay(700);
-  
-  
- 
-  while(!Serial.available());
-  palpite = Serial.parseInt(); 
- 
-  
-   if(numeroSorteado == palpite) 
-   {
-    digitalWrite(ledVerde, HIGH); 
-     delay(500);
-     digitalWrite(ledVerde, LOW);
-     Serial.println(" numero sorteado");
-     digitalWrite(ledAzul, HIGH);
-     delay(500);
-   digitalWrite(ledAzul, LOW);
-     
-  
-    
-     
- } else {  
-   digitalWrite(ledVermelho, HIGH);
-     delay(500);
-   digitalWrite(ledVermelho, LOW);
-     
-  }
+}
+
+void piscarLED(int pino) {
+  digitalWrite(pino, HIGH);
+  delay(500);
+  digitalWrite(pino, LOW);
+}
+
+void novoDesafio() {
+  numeroSorteado = random(1, 7); 
+  Serial.println("tente novamente: adivinhe o número sorteado (1 a 6):");
 }
